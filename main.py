@@ -4,14 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import requests
 import uuid
+import os
 
 app = FastAPI()
 
-# ... (CORS 설정 동일) ...
-
-# 1. Supabase 접속 정보 (환경 변수에서 가져오고, 없으면 기본값 사용)
+# Supabase 접속 정보
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://jnimnexbzjljtmjueytm.supabase.co")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 headers = {
     "apikey": SUPABASE_SERVICE_KEY,
@@ -20,8 +19,8 @@ headers = {
     "Prefer": "return=representation"
 }
 
-# 2. Resend API 키 설정
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_RujmRkeg_NXg7cjqEmFTTTdtwKQ5m4qEG")
+# Resend API 키 설정
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 
 def send_email_resend(to_email: str, license_key: str, expire_date_str: str, plan_name: str = "3일 무료 체험"):
     """Resend API를 사용하여 라이선스 키 이메일 발송"""
