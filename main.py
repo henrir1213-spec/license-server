@@ -1,12 +1,22 @@
 import os
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import requests
 import uuid
-import os
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# -------------------------------------------------------------------
+# [보완] CORS 미들웨어 설정 (Failed to fetch 및 브라우저 요청 차단 방지)
+# -------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 랜딩페이지/웹 도메인에서 접속 가능
+    allow_credentials=True,
+    allow_methods=["*"],  # GET, POST, OPTIONS 등 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
+)
 
 # Supabase 접속 정보
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://jnimnexbzjljtmjueytm.supabase.co")
@@ -21,6 +31,7 @@ headers = {
 
 # Resend API 키 설정
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+
 
 def send_email_resend(to_email: str, license_key: str, expire_date_str: str, plan_name: str = "3일 무료 체험"):
     """Resend API를 사용하여 라이선스 키 이메일 발송"""
@@ -121,9 +132,14 @@ def send_email_resend(to_email: str, license_key: str, expire_date_str: str, pla
 
 
 # --- 1. 3일 무료 체험 발급 API ---
+@app.options("/api/issue-trial")
 @app.post("/api/issue-trial")
+@app.options("/webhook/trial")
 @app.post("/webhook/trial")
 async def issue_trial_license(request: Request):
+    if request.method == "OPTIONS":
+        return {}
+
     try:
         data = await request.json()
     except Exception:
@@ -180,8 +196,12 @@ async def issue_trial_license(request: Request):
 
 
 # --- 2. 유료 결제 완료 및 플랜 업그레이드 API ---
+@app.options("/api/payment/complete")
 @app.post("/api/payment/complete")
 async def complete_payment(request: Request):
+    if request.method == "OPTIONS":
+        return {}
+
     try:
         data = await request.json()
     except Exception:
