@@ -112,7 +112,7 @@ def send_email_resend(to_email: str, license_key: str, expire_date_str: str, pla
     """
 
     payload = {
-        "from": "BlogAutomata <onboarding@resend.dev>",
+        "from": "BlogAutomata <noreply@blogautomata.shop.com>",
         "to": [to_email],
         "subject": f"[BlogAutomata] {plan_name} 라이선스 키가 발급되었습니다.",
         "html": html_body
