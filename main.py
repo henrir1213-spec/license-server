@@ -67,7 +67,7 @@ def send_email_resend(to_email: str, license_key: str, expire_date_str: str, pla
                     <p style="color: #F8FAFC; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
                         안녕하세요! <strong style="color: #10B981;">BlogAutomata</strong>를 이용해 주셔서 감사합니다.<br>
                         아래 발급된 라이선스 키를 프로그램 실행 후 입력하여 사용해 주세요.<br>
-                        꼭 메일의 스팸함도 확인해 주세요!
+                        압축폴더 비밀번호는 0000 입니다!
                     </p>
 
                     <!-- License Box -->
@@ -264,14 +264,30 @@ async def complete_payment(request: Request):
         db_res = requests.post(f"{SUPABASE_URL}/rest/v1/licenses", headers=headers, json=insert_payload)
 
     if db_res.status_code in [200, 201, 204]:
-        send_email_resend(user_email, license_key, expire_str, plan_name)
-        return {
-            "status": "success",
-            "message": "결제 및 라이선스 발급이 완료되었습니다.",
-            "license_key": license_key
-        }
-    else:
-        raise HTTPException(status_code=500, detail="DB 업데이트 및 결제 처리 중 오류가 발생했습니다.")
+        def send_email_resend(to_email: str, license_key: str, expire_date_str: str, plan_name: str = "3일 무료 체험"):
+            resend_url = "https://api.resend.com/emails"
+            email_headers = {
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "from": "BlogAutomata <noreply@blogautomata.shop>", # 실제 Verified된 도메인
+                "to": [to_email],
+                "subject": f"[BlogAutomata] {plan_name} 라이선스 키가 발급되었습니다.",
+                "html": f"<p>라이선스 키: <strong>{license_key}</strong></p><p>만료일: {expire_date_str}</p>"
+            }
+
+            try:
+                response = requests.post(resend_url, headers=email_headers, json=payload, timeout=10)
+                print(f"=== [Resend Debug Log] ===")
+                print(f"Status Code: {response.status_code}")
+                print(f"Response: {response.text}")
+                print(f"==========================")
+                return response.json()
+            except Exception as e:
+                print(f"❌ Resend API 호출 실패: {str(e)}")
+                return None
 
 
 # --- 3. 오토 프로그램 라이선스 검증 API ---
